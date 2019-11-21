@@ -7,6 +7,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import sk.riesky.bedyeet.Bedyeetus;
 import sk.riesky.bedyeet.Game;
+import sk.riesky.bedyeet.GameTeam;
 import sk.riesky.bedyeet.Manager;
 import sk.riesky.bedyeet.Resources.Constants;
 import sk.riesky.bedyeet.Resources.Messenger.*;
@@ -19,7 +20,7 @@ import static sk.riesky.bedyeet.Resources.Messenger.Send;
 
 public class MainCommand implements CommandExecutor {
 
-    private Bedyeetus main;
+    private final Bedyeetus main;
     private Manager manager = Manager.getInstance();
     ArrayList<String> list_aliases = new ArrayList<>(List.of("games", "list"));
 
@@ -34,19 +35,15 @@ public class MainCommand implements CommandExecutor {
             if (args.length > 0) {
                 if (args[0].equals("create")) {
                     if (args.length == 2) {
-                        if (manager.isEditing(player.getUniqueId())) {
-                            manager.addGame(new Game(player, args[1]));
+                        if (!manager.isEditing(player.getUniqueId())) {
+                            Game new_game = new Game(this.main, player, args[1]);
+                            main.getServer().getPluginManager().registerEvents(new_game, main);
+                            manager.addGame(new_game);
                         } else {
                             Send(player, "You are already in edit mode!", MessageType.WARNING);
                         }
                     } else {
                         Send(player, "Please specify game name!", MessageType.WARNING);
-                    }
-                } else if (args[0].equals("exit")) {
-                    if (manager.isEditing(player.getUniqueId())) {
-                        manager.unsetFrom_EditMode(player.getUniqueId());
-                    } else {
-                        Send(player, "You are currently not in edit mode!", MessageType.ANNOUNCE);
                     }
                 } else if (list_aliases.contains(args[0])) {
                     var games = manager.getGames();
@@ -58,8 +55,51 @@ public class MainCommand implements CommandExecutor {
                     } else {
                         Send(player, "There aren't any games created yet.", MessageType.WARNING);
                     }
-                } else if (args[0] == "addteam") {
+                }
+                if (manager.isEditing(player.getUniqueId())) {
+                    if (args[0].equals("exit")) {
+                        if (manager.isEditing(player.getUniqueId())) {
+                            manager.unsetFrom_EditMode(player.getUniqueId());
+                        } else {
+                            Send(player, "You are currently not in edit mode!", MessageType.ANNOUNCE);
+                        }
+                    } else if (args[0].equals("addteam")) {
+                        if (args.length == 2) {
+                            Game target = manager.getEditedTarget(player.getUniqueId());
+                            GameTeam new_team = new GameTeam(this.main, player, target, args[1]);
+                            this.main.getServer().getPluginManager().registerEvents(new_team, main);
+                            target.addTeam(new_team);
+                        } else {
+                            Send(player, "Please specify team name!", MessageType.WARNING, PrefixType.EDITOR);
+                        }
+                    } else if (args[0].equals("removeteam")) {
+                        if (args.length == 2) {
+                            Game target = manager.getEditedTarget(player.getUniqueId());
+                            GameTeam team = target.getTeam(args[1]);
+                            if (team != null) {
+                                target.removeTeam(team);
+                            } else {
+                                Send(player, "Team was not found!", MessageType.ERROR, PrefixType.EDITOR);
+                            }
+                        } else {
+                            Send(player, "Please specify team name!", MessageType.WARNING, PrefixType.EDITOR);
+                        }
+                    } else if (args[0].equals("teams")) {
+                        var teams = manager.getEditedTarget(player.getUniqueId()).getTeams();
+                        if (teams.size() > 0) {
+                            Send(player, "List of created teams:", MessageType.INFO, PrefixType.EDITOR);
+                            for (GameTeam team: teams) {
+                                Send(player, "┗ "+team.getDisplayName(), MessageType.INFO, PrefixType.NONE);
+                            }
+                        } else {
+                            Send(player, "There aren't any teams created yet.", MessageType.WARNING, PrefixType.EDITOR);
+                        }
+                    }
+                    if (manager.getEditedTarget(player.getUniqueId()).getEditorTool() != Manager.GameEditorTool.TEAM) {
+                        if (args[0].equals("diamond")) {
 
+                        }
+                    }
                 }
             }
         }

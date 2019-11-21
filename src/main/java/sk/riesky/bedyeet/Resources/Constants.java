@@ -1,6 +1,8 @@
 package sk.riesky.bedyeet.Resources;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
+
 import java.util.Map;
 
 import static sk.riesky.bedyeet.Resources.Messenger.MessageType;
@@ -27,6 +29,14 @@ public class Constants {
             Map.entry(GameState.PREPARED, ChatColor.YELLOW),
             Map.entry(GameState.WAITING, ChatColor.GREEN),
             Map.entry(GameState.IN_PROGRESS, ChatColor.LIGHT_PURPLE)
+    );
+
+    public static final Map<Integer, Material> NEXUS_HARDNESS = Map.ofEntries(
+            Map.entry(5, Material.OBSIDIAN),
+            Map.entry(15, Material.WHITE_CONCRETE),
+            Map.entry(30, Material.TERRACOTTA),
+            Map.entry(50, Material.WHITE_CONCRETE_POWDER),
+            Map.entry(100, Material.WHITE_STAINED_GLASS)
     );
 
     // Commands

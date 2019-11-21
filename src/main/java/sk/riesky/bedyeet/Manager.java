@@ -27,7 +27,7 @@ public class Manager {
     private BidiMap<UUID, String> edit_mode = new DualHashBidiMap<>();
 
     public enum GameState { EDITING, PREPARED, WAITING, IN_PROGRESS }
-    public enum GameEditorTool { INACTIVE, DIAMOND_GENERATOR, EMERALD_GENERATOR, DELETE }
+    public enum GameEditorTool { INACTIVE, SPAWN_LOC,  DIAMOND_GENERATOR, EMERALD_GENERATOR, TEAM, DELETE }
     public enum TeamEditorTool { INACTIVE, NEXUS, SPAWN_POINT, EMERALD_SHOP, DIAMOND_SHOP }
 
     public void addGame(Game g) {

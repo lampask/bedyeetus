@@ -1,0 +1,21 @@
+name: Bedyeetus
+version: ${project.version}
+main: sk.riesky.bedyeet.Bedyeetus
+api-version: 1.13
+description: Simple Bedwars plugin for riesky vikendovka 2019 event
+commands:
+  yyt:
+    description: Enter game editor mode.
+    usage: /yyt [create|exit] (game)
+    permission: bedyeetus.yyt
+    permission-message: You not have have permission to use this command.
+  join:
+    description: Join game team.
+    usage: /join (team)
+  leave:
+    description: Leave game team.
+    usage: /leave (team)
+permissions:
+  bedyeetus.yyt:
+    description: Allows you to use the command /yyt
+    default: op

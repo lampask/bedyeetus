@@ -1,0 +1,6 @@
+prefix: "yeet"
+host: "localhost"
+database: "bedyeetus"
+username: "root"
+password: ""
+port: 3306

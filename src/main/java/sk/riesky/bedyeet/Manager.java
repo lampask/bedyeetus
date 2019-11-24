@@ -30,12 +30,16 @@ public class Manager {
     public enum GameEditorTool { INACTIVE, SPAWN_LOC,  DIAMOND_GENERATOR, EMERALD_GENERATOR, TEAM, DELETE }
     public enum TeamEditorTool { INACTIVE, NEXUS, SPAWN_POINT, EMERALD_SHOP, DIAMOND_SHOP }
 
+    public Game main_game;
+
     public void addGame(Game g) {
         this.games.put(g.name, g);
     }
 
     public void removeGame(CommandSender sender, String name) {
-        String displayname = this.games.get(name).getDisplay_name();
+        Game target = this.games.get(name);
+        String displayname = target.getDisplay_name();
+        target.delete();
         this.games.remove(name);
         Send(sender, "Deletion was successful!", MessageType.EDIT);
         if (this.edit_mode.containsValue(name)) {

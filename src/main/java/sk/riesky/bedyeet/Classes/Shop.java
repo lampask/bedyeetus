@@ -1,15 +1,13 @@
 package sk.riesky.bedyeet.Classes;
 
-import org.bukkit.Bukkit;
+import javafx.util.Pair;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityInteractEvent;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
@@ -19,21 +17,28 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
+import java.security.KeyPair;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Shop implements InventoryHolder, Listener {
 
     protected Location shop_location;
     protected Villager shop_villager;
     protected Inventory shop_gui;
+    protected List<Pair<Integer, Integer>> prices;
 
     public Shop(Location loc) {
-        this.shop_location = loc.add(0,1,0);
+        this.shop_location = loc.add(0.5,1,0.5);
         this.shop_villager = (Villager) this.shop_location.getWorld().spawnEntity(shop_location, EntityType.VILLAGER);
+        this.shop_villager.setAI(false);
+        this.shop_villager.setInvulnerable(true);
     }
 
     public void destroyEntity() {
-        this.shop_villager.damage(this.shop_villager.getHealth());
+        if (this.shop_villager != null) {
+            this.shop_villager.remove();
+        }
     }
 
     @NotNull
@@ -64,31 +69,10 @@ public class Shop implements InventoryHolder, Listener {
         p.openInventory(shop_gui);
     }
 
-    // Check for clicks on items
-    @EventHandler
-    public void onInventoryClick(InventoryClickEvent e) {
-        if (e.getInventory().getHolder() != this) {
-            return;
-        }
-        if (e.getClick().equals(ClickType.NUMBER_KEY)){
-            e.setCancelled(true);
-        }
-        e.setCancelled(true);
-
-        Player p = (Player) e.getWhoClicked();
-        ItemStack clickedItem = e.getCurrentItem();
-
-        // verify current item is not null
-        if (clickedItem == null || clickedItem.getType() == Material.AIR) return;
-
-        // Using slots click is a best option for your inventory click's
-        if (e.getRawSlot() == 10) p.sendMessage("You clicked at slot " + 10);
-    }
-
     @EventHandler
     public void onVillagerClick(PlayerInteractEntityEvent event) {
         if (event.getRightClicked().equals(this.shop_villager)) {
-            this.openInventory(event.getPlayer());
+            openInventory(event.getPlayer());
         }
     }
 }

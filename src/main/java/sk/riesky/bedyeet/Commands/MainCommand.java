@@ -1,15 +1,16 @@
 package sk.riesky.bedyeet.Commands;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import sk.riesky.bedyeet.Bedyeetus;
-import sk.riesky.bedyeet.Game;
-import sk.riesky.bedyeet.GameTeam;
-import sk.riesky.bedyeet.Manager;
+import org.bukkit.scheduler.BukkitTask;
+import sk.riesky.bedyeet.*;
+import sk.riesky.bedyeet.Events.GameStartEvent;
 import sk.riesky.bedyeet.Resources.Constants;
+import sk.riesky.bedyeet.Resources.Messenger;
 import sk.riesky.bedyeet.Resources.Messenger.*;
 
 import java.util.ArrayList;
@@ -55,6 +56,28 @@ public class MainCommand implements CommandExecutor {
                     } else {
                         Send(player, "There aren't any games created yet.", MessageType.WARNING);
                     }
+                } else if (args[0].equals("start")) {
+                    if (args.length == 2) {
+                        Game g = Manager.getInstance().getGames().get(args[1]);
+                        g.setState(Manager.GameState.IN_PROGRESS);
+                        Manager.getInstance().main_game = g;
+                        g.mapInit();
+                        Send(player, String.format("Starting game %s", g.getDisplay_name()));
+                        for (GameTeam team: g.getTeams()) {
+                            for (GamePlayer p: team.getPlayers()) {
+                                p.player.teleport(g.spawn_location);
+                                p.player.getInventory().clear();
+                                p.player.setGameMode(GameMode.SURVIVAL);
+                            }
+                        }
+                        countdown();
+                        Bukkit.getScheduler().scheduleSyncDelayedTask(this.main, () -> {
+                            main.getServer().getPluginManager().callEvent(new GameStartEvent());
+                            Bukkit.broadcastMessage("Game started!");
+                        }, 10000/50);
+                    } else {
+                        Send(player, "Please specify game name!", MessageType.WARNING);
+                    }
                 }
                 if (manager.isEditing(player.getUniqueId())) {
                     if (args[0].equals("exit")) {
@@ -77,7 +100,7 @@ public class MainCommand implements CommandExecutor {
                             Game target = manager.getEditedTarget(player.getUniqueId());
                             GameTeam team = target.getTeam(args[1]);
                             if (team != null) {
-                                target.removeTeam(team);
+                                target.removeTeam(team, true);
                             } else {
                                 Send(player, "Team was not found!", MessageType.ERROR, PrefixType.EDITOR);
                             }
@@ -95,9 +118,27 @@ public class MainCommand implements CommandExecutor {
                             Send(player, "There aren't any teams created yet.", MessageType.WARNING, PrefixType.EDITOR);
                         }
                     }
-                    if (manager.getEditedTarget(player.getUniqueId()).getEditorTool() != Manager.GameEditorTool.TEAM) {
-                        if (args[0].equals("diamond")) {
-
+                    Game target = manager.getEditedTarget(player.getUniqueId());
+                    if (target != null) {
+                        if (target.getEditorTool() != Manager.GameEditorTool.TEAM) {
+                            if (args[0].equals("diamond")) {
+                                target.setEditorTool(Manager.GameEditorTool.DIAMOND_GENERATOR);
+                                Messenger.Send(player, "Please select position for diamond spawner.", MessageType.INFO, PrefixType.EDITOR);
+                            } else if (args[0].equals("emerald")) {
+                                target.setEditorTool(Manager.GameEditorTool.EMERALD_GENERATOR);
+                                Messenger.Send(player, "Please select position for emerald spawner.", MessageType.INFO, PrefixType.EDITOR);
+                            } else if (args[0].equals("deletespawner")) {
+                                target.setEditorTool(Manager.GameEditorTool.DELETE);
+                                Messenger.Send(player, "Please select spawner to delete.", MessageType.INFO, PrefixType.EDITOR);
+                            } else if (args[0].equals("complete")) {
+                                if (target.getTeams().size() > -1) {
+                                    target.setState(Manager.GameState.PREPARED);
+                                    Manager.getInstance().unsetFrom_EditMode(player.getUniqueId());
+                                    Messenger.Send(player, "GAME COMPLETED", MessageType.ANNOUNCE);
+                                } else {
+                                    Messenger.Send(player, "You need to have at least 2 teams to complete game.", MessageType.ERROR, PrefixType.EDITOR);
+                                }
+                            }
                         }
                     }
                 }
@@ -121,5 +162,23 @@ public class MainCommand implements CommandExecutor {
             }
         }
         return true;
+    }
+
+    BukkitTask task;
+    int cd = 10;
+    void countdown() {
+        task = Bukkit.getScheduler().runTaskLater(main, new Runnable() {
+            @Override
+            public void run() {
+                Bukkit.broadcastMessage(String.format("%s", cd));
+                cd--;
+                if (cd == 1) {
+                    cd = 10;
+                    task.cancel();
+                } else {
+                    task = Bukkit.getScheduler().runTaskLater(main, this, 1000 / 50);
+                }
+            }
+        }, 1000/50);
     }
 }
